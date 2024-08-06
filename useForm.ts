@@ -1,40 +1,31 @@
-import { createRef, useState } from 'react';
+import { createRef, useCallback, useRef } from 'react';
 import type { RefObject } from 'react';
 
-type InputRefs = RefObject<HTMLInputElement>;
-
-type State = {
-  [key in string]: {
-    ref: InputRefs;
-  };
+type InputRefs = {
+  name: string;
+  ref: RefObject<HTMLInputElement>;
 };
 
 export function useForm() {
-  const [state, setState] = useState<State>({});
+  const refs = useRef<InputRefs[]>([]);
 
   const getFields = () => {
-    const values: Record<string, any> = {};
+    const obj: Record<string, unknown> = {};
 
-    Object.keys(state).forEach((key) => {
-      values[key] = state[key].ref;
-    });
+    refs.current.forEach((ref) => (obj[ref.name] = ref.ref.current?.value));
+
+    return obj;
   };
 
-  const init = (name: string) => {
+  const init = useCallback((name: string) => {
     const ref = createRef<HTMLInputElement>();
 
-    setState((prev) => ({
-      ...prev,
-      [name]: {
-        ...prev[name],
-        ref,
-      },
-    }));
+    refs.current?.push({ name, ref });
 
     return {
       ref,
     };
-  };
+  }, []);
 
   return {
     init,
